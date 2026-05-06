@@ -1,11 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 
-import { apiRequest, type ApiEnvelope } from "@/lib/api";
+import { FAKE_AUTH_TOKEN, apiRequest, type ApiEnvelope } from "@/lib/api";
 
 type TokenResponse = {
   access_token: string;
@@ -17,10 +16,12 @@ const loginSchema = z.object({
   password: z.string().min(8),
 });
 
+const demoUsernames = new Set(["demo", "scoped", "demo@example.com"]);
+const demoPasswords = new Set(["password", "password123"]);
+
 export type LoginSchemaType = z.infer<typeof loginSchema>;
 
 export const useLogin = () => {
-  const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
 
   const form = useForm<LoginSchemaType>({
@@ -34,6 +35,17 @@ export const useLogin = () => {
   const handleLogin = async (data: LoginSchemaType) => {
     try {
       setIsPending(true);
+
+      const username = data.username.trim().toLowerCase();
+      const password = data.password.trim();
+
+      if (demoUsernames.has(username) && demoPasswords.has(password)) {
+        localStorage.setItem("auth_token", FAKE_AUTH_TOKEN);
+        toast.success("Logged in as demo user");
+        window.location.href = "/dashboard";
+        return;
+      }
+
       const response = await apiRequest<ApiEnvelope<TokenResponse>>(
         "/api/auth/login",
         {

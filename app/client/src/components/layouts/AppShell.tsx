@@ -1,49 +1,154 @@
-import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  History as HistoryIcon,
+  ChevronsUpDown,
+  History,
+  House,
   LayoutDashboard,
   LogOut,
-  Monitor,
-  Moon,
-  PanelLeft,
   Settings,
   Shield,
-  Sun,
+  User,
 } from "lucide-react";
+import * as React from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+} from "@/components/ui/sidebar";
 import { useUser } from "@/context/UserContext";
-import { useTheme } from "@/components/theme-provider";
+import { cn } from "@/lib/utils";
 
-const navItems = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "History",
-    href: "/history",
-    icon: HistoryIcon,
-  },
-  {
-    label: "Security",
-    href: "/security",
-    icon: Shield,
-  },
-  {
-    label: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
-];
+type NavItem = {
+  label: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  href: string;
+  exact?: boolean;
+};
 
-const AppShell = () => {
-  const { user, logout } = useUser();
-  const { theme, setTheme } = useTheme();
+const navGroups = [
+  {
+    title: "Workspace",
+    items: [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        href: "/dashboard",
+      },
+      {
+        label: "History",
+        icon: History,
+        href: "/history",
+        exact: true,
+      },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      {
+        label: "Security",
+        icon: Shield,
+        href: "/security",
+        exact: true,
+      },
+      {
+        label: "Settings",
+        icon: Settings,
+        href: "/settings",
+        exact: true,
+      },
+    ],
+  },
+] satisfies Array<{ title: string; items: NavItem[] }>;
+
+const getInitials = (name: string) =>
+  name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+const getCurrentPage = (pathname: string) => {
+  const items = navGroups.flatMap((group) => group.items);
+  const match = items.find((item) =>
+    item.exact ? pathname === item.href : pathname.startsWith(item.href),
+  );
+
+  return match ?? items[0];
+};
+
+const SidebarLogo = () => {
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton size="lg" asChild>
+          <Link to="/dashboard">
+              <img
+                src="/logo.png"
+                alt="Scoped logo"
+                className="h-10"
+              />
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+};
+
+const NavMenuItem = ({ item }: { item: NavItem }) => {
   const location = useLocation();
+  const Icon = item.icon;
+  const isActive = item.exact
+    ? location.pathname === item.href
+    : location.pathname.startsWith(item.href);
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+        <NavLink to={item.href} end={item.exact}>
+          <Icon className="size-4" />
+          <span>{item.label}</span>
+        </NavLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+};
+
+const NavUser = () => {
+  const { user, logout } = useUser();
   const navigate = useNavigate();
+  const username = user?.username ?? "Guest";
+  const email = user?.email ?? "guest@scoped.local";
 
   const handleLogout = () => {
     logout();
@@ -52,114 +157,127 @@ const AppShell = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-  <div className="flex h-screen overflow-hidden">
-    <aside className="hidden h-screen w-62.5 shrink-0 border-r bg-card lg:flex lg:flex-col">
-          <div className="flex items-center gap-3 border-b px-6 py-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
-              <PanelLeft className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xl font-bold tracking-tight text-foreground">
-                Scoped
-              </p>
-              <p className="text-xs text-muted-foreground">IBCS Checker</p>
-            </div>
-          </div>
-
-          <nav className="flex-1 px-4 py-6">
-            <ul className="space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <li key={item.href}>
-                    <NavLink
-                      to={item.href}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
-                          isActive
-                            ? "bg-violet-600 text-white shadow-sm"
-                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                        }`
-                      }
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </NavLink>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          <div className="border-t px-4 py-4">
-            <div className="mb-4 rounded-xl bg-accent px-4 py-3">
-              <p className="text-sm font-medium text-foreground">
-                {user?.username ?? "Guest"}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {location.pathname}
-              </p>
-            </div>
-
-            <div className="mb-3 grid grid-cols-3 gap-2 rounded-xl bg-accent p-1">
-              <button
-                type="button"
-                onClick={() => setTheme("light")}
-                className={`flex items-center justify-center rounded-lg py-2 text-xs transition ${
-                  theme === "light"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Sun className="h-4 w-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTheme("dark")}
-                className={`flex items-center justify-center rounded-lg py-2 text-xs transition ${
-                  theme === "dark"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Moon className="h-4 w-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTheme("system")}
-                className={`flex items-center justify-center rounded-lg py-2 text-xs transition ${
-                  theme === "system"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Monitor className="h-4 w-4" />
-              </button>
-            </div>
-
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="w-full justify-start text-muted-foreground hover:bg-accent hover:text-foreground"
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="w-full data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              Log Out
-            </Button>
-          </div>
-        </aside>
-
-        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-      <main className="flex-1 p-4 md:p-6 lg:p-8">
-            <Outlet />
-          </main>
-        </div>
-      </div>
-    </div>
+              <Avatar className="size-8 rounded-lg">
+                <AvatarFallback className="rounded-lg">
+                  {getInitials(username)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{username}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {email}
+                </span>
+              </div>
+              <ChevronsUpDown className="ml-auto size-4" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="min-w-56 rounded-lg"
+            side="bottom"
+            align="end"
+            sideOffset={4}
+          >
+            <DropdownMenuLabel className="p-0 font-normal">
+              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <Avatar className="size-8 rounded-lg">
+                  <AvatarFallback className="rounded-lg">
+                    {getInitials(username)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{username}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {email}
+                  </span>
+                </div>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled>
+              <User className="mr-2 size-4" />
+              Account
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 size-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 };
 
-export default AppShell;
+const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarLogo />
+      </SidebarHeader>
+      <SidebarContent>
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.title}>
+            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <NavMenuItem key={item.href} item={item} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser />
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  );
+};
+
+type ApplicationShell1Props = {
+  className?: string;
+};
+
+export function ApplicationShell1({ className }: ApplicationShell1Props) {
+  const location = useLocation();
+  const currentPage = getCurrentPage(location.pathname);
+
+  return (
+    <SidebarProvider className={cn(className)}>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem className="hidden md:block">
+                <BreadcrumbLink asChild>
+                  <Link to="/dashboard"><House size={17}/></Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{currentPage.label}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
+
+export default ApplicationShell1;

@@ -1,6 +1,5 @@
 import { toast } from "sonner";
 
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 import { useForm } from "react-hook-form";
@@ -23,7 +22,6 @@ export type RegistrationSchemaType = z.infer<typeof registrationSchema>;
 
 
 export const useRegister = () => {
-  const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
 
   const form = useForm<RegistrationSchemaType>({

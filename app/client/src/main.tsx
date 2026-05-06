@@ -8,6 +8,7 @@
 
   import { ThemeProvider } from "@/components/theme-provider.tsx"
   import { UserProvider } from "@/context/UserContext.tsx"
+  import { TooltipProvider } from "@/components/ui/tooltip"
   import { BrowserRouter } from "react-router-dom";
   import { Toaster } from "sonner";
 
@@ -16,8 +17,10 @@
       <BrowserRouter>
         <UserProvider>
           <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-            <App />
-            <Toaster position="top-center" />
+            <TooltipProvider>
+              <App />
+              <Toaster position="top-center" />
+            </TooltipProvider>
           </ThemeProvider>
         </UserProvider>
       </BrowserRouter>

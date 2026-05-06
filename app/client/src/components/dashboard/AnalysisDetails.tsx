@@ -1,7 +1,68 @@
+import { AlertTriangle, CheckCircle2, CircleGauge, XCircle } from "lucide-react";
+
 import { type DashboardAnalysis } from "@/lib/api";
 
 type AnalysisDetailsProps = {
   analysis: DashboardAnalysis | null;
+};
+
+const getScoreTone = (score: number | null | undefined) => {
+  if (score == null) {
+    return {
+      dot: "bg-muted-foreground",
+      icon: CircleGauge,
+      label: "Not scored",
+    };
+  }
+
+  if (score >= 80) {
+    return {
+      dot: "bg-green-400",
+      icon: CheckCircle2,
+      label: "Pass",
+    };
+  }
+
+  if (score >= 60) {
+    return {
+      dot: "bg-yellow-400",
+      icon: AlertTriangle,
+      label: "Warning",
+    };
+  }
+
+  return {
+    dot: "bg-red-400",
+    icon: XCircle,
+    label: "Not pass",
+  };
+};
+
+const getFeedbackTone = (status: string, score: number) => {
+  if (status === "pass" || score >= 80) {
+    return {
+      badge: "border-green-200 bg-green-50 text-green-700 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-300",
+      bar: "bg-green-400",
+      dot: "bg-green-400",
+      icon: CheckCircle2,
+    };
+  }
+
+  if (status === "warning" || score >= 60) {
+    return {
+      badge: "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-900/50 dark:bg-yellow-950/30 dark:text-yellow-300",
+      bar: "bg-yellow-400",
+      dot: "bg-yellow-400",
+      icon: AlertTriangle,
+    };
+  }
+
+  return {
+    badge: "border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300",
+    bar: "bg-red-400",
+    dot: "bg-red-400",
+    icon: XCircle,
+  };
 };
 
 const AnalysisDetails = ({ analysis }: AnalysisDetailsProps) => {
@@ -16,9 +77,10 @@ const AnalysisDetails = ({ analysis }: AnalysisDetailsProps) => {
   const resultLabel = analysis.overall_result
     ? analysis.overall_result.replaceAll("_", " ")
     : "Unknown";
+  const overallScoreTone = getScoreTone(analysis.overall_score);
 
   return (
-    <section className="rounded-2xl border bg-card p-6 shadow-sm">
+    <section className="rounded-2xl">
       <div className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
           <div className="rounded-2xl border p-5">
@@ -44,8 +106,13 @@ const AnalysisDetails = ({ analysis }: AnalysisDetailsProps) => {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Score
                 </p>
-                <p className="mt-2 text-sm font-semibold text-foreground">
-                  {analysis.overall_score ?? "-"} / 100
+                <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <span className={`size-2 rounded-full ${overallScoreTone.dot}`} />
+                  <span>{analysis.overall_score ?? "-"} / 100</span>
+
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {overallScoreTone.label}
                 </p>
               </div>
 
@@ -115,19 +182,8 @@ const AnalysisDetails = ({ analysis }: AnalysisDetailsProps) => {
 
           <div className="grid gap-4 md:grid-cols-2">
             {analysis.feedback_json?.map((item) => {
-              const statusStyles =
-                item.status === "pass"
-                  ? "bg-lime-100 text-lime-800 dark:bg-lime-500/20 dark:text-lime-200"
-                  : item.status === "warning"
-                    ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200"
-                    : "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200";
-
-              const barStyles =
-                item.status === "pass"
-                  ? "bg-lime-500"
-                  : item.status === "warning"
-                    ? "bg-amber-400"
-                    : "bg-red-500";
+              const tone = getFeedbackTone(item.status, item.score);
+              const StatusIcon = tone.icon;
 
               return (
                 <div
@@ -145,8 +201,9 @@ const AnalysisDetails = ({ analysis }: AnalysisDetailsProps) => {
                     </div>
 
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${statusStyles}`}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium capitalize ${tone.badge}`}
                     >
+                      <StatusIcon className="size-3.5" />
                       {item.status}
                     </span>
                   </div>
@@ -157,12 +214,15 @@ const AnalysisDetails = ({ analysis }: AnalysisDetailsProps) => {
 
                   <div className="mt-4">
                     <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Score</span>
-                      <span>{item.score}/100</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className={`size-2 rounded-full ${tone.dot}`} />
+                        Score
+                      </span>
+                      <span className="font-medium text-foreground">{item.score}/100</span>
                     </div>
                     <div className="h-2 rounded-full bg-accent">
                       <div
-                        className={`h-2 rounded-full ${barStyles}`}
+                        className={`h-2 rounded-full ${tone.bar}`}
                         style={{ width: `${item.score}%` }}
                       />
                     </div>

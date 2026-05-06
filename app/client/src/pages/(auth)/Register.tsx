@@ -8,12 +8,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 import { useRegister } from "@/features/auth/hooks/useRegister";
 import PasswordStrengthChecks from "@/components/shared/PasswordChecker";
+import { Logo } from "@/components/navbar";
 
 const Register = () => {
   const { form, handleSubmit, isPending } = useRegister();
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
+      <div className="bg-muted relative hidden lg:block overflow-hidden">
+        <img src="https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas/saas-1-16x9.png" className="w-full h-2/3 object-cover absolute bottom-0 rounded-xl shadow-lg -left-10" />
+
+      </div>
+
+      <Logo className="absolute top-4 left-4 h-10" />
+
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
@@ -87,9 +95,9 @@ const Register = () => {
                   />
 
                   {form.watch("password") ? (
-                      <PasswordStrengthChecks
-                        password={form.watch("password")}
-                      />
+                    <PasswordStrengthChecks
+                      password={form.watch("password")}
+                    />
                   ) : null}
 
                   <Button disabled={isPending} type="submit" className="w-full">
@@ -118,13 +126,6 @@ const Register = () => {
             </Form>
           </div>
         </div>
-      </div>
-      <div className="bg-muted relative hidden lg:block">
-        <img
-          src="https://ui.shadcn.com/placeholder.svg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
       </div>
     </div>
   );
