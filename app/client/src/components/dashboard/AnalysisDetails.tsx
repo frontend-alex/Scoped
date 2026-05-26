@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertCircle,
+  ArrowRight,
   BarChart3,
   CheckCircle2,
   Eye,
@@ -96,6 +97,13 @@ function getFeedbackTone(status: FeedbackItem["status"], score: number) {
   };
 }
 
+function getChartBucket(score?: number | null) {
+  if (score === null || score === undefined) return "unknown";
+  if (score >= 80) return "good";
+  if (score >= 60) return "warning";
+  return "problem";
+}
+
 function parseChartNumberFromText(value?: string) {
   if (!value) return null;
 
@@ -165,20 +173,34 @@ function TabButton({
   );
 }
 
-function MiniStat({
+function TopMetricCard({
   label,
   value,
+  tone = "default",
 }: {
   label: string;
   value: number | string;
+  tone?: "default" | "good" | "warning" | "problem";
 }) {
+  const dotClass =
+    tone === "good"
+      ? "bg-emerald-400"
+      : tone === "warning"
+        ? "bg-amber-400"
+        : tone === "problem"
+          ? "bg-red-400"
+          : "bg-muted-foreground";
+
   return (
-    <div className="rounded-2xl border bg-background/70 px-3 py-2">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-2xl border bg-background/70 p-4 transition hover:border-foreground/20 hover:bg-accent/40">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
 
-      <p className="mt-1 text-lg font-black text-foreground">{value}</p>
+      <p className="mt-2 flex items-center gap-2 text-2xl font-black text-foreground">
+        <span className={`size-2.5 rounded-full ${dotClass}`} />
+        {value}
+      </p>
     </div>
   );
 }
@@ -283,17 +305,16 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
       (item) => !parseChartNumberFromText(item.category),
     );
 
-    const passedFeedbackCount = feedbackItems.filter(
-      (item) => item.status === "pass" || item.score >= 80,
+    const goodChartCount = chartAudits.filter(
+      (audit) => getChartBucket(audit.score) === "good",
     ).length;
 
-    const warningFeedbackCount = feedbackItems.filter(
-      (item) =>
-        item.status === "warning" || (item.score >= 60 && item.score < 80),
+    const warningChartCount = chartAudits.filter(
+      (audit) => getChartBucket(audit.score) === "warning",
     ).length;
 
-    const failedFeedbackCount = feedbackItems.filter(
-      (item) => item.status === "fail" || item.score < 60,
+    const problemChartCount = chartAudits.filter(
+      (audit) => getChartBucket(audit.score) === "problem",
     ).length;
 
     return {
@@ -302,9 +323,9 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
       feedbackItems,
       annotatedImageUrl,
       ungroupedFeedback,
-      passedFeedbackCount,
-      warningFeedbackCount,
-      failedFeedbackCount,
+      goodChartCount,
+      warningChartCount,
+      problemChartCount,
     };
   }, [analysis]);
 
@@ -318,9 +339,9 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
     feedbackItems,
     annotatedImageUrl,
     ungroupedFeedback,
-    passedFeedbackCount,
-    warningFeedbackCount,
-    failedFeedbackCount,
+    goodChartCount,
+    warningChartCount,
+    problemChartCount,
   } = derived;
 
   const scoreTone = getScoreTone(analysis.overall_score);
@@ -370,27 +391,27 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
   return (
     <>
       <section className="overflow-hidden rounded-[1.75rem] border bg-card shadow-sm">
-        <div className="border-b p-4">
-          <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-center">
+        <div className="border-b p-5">
+          <div className="grid gap-5 xl:grid-cols-[1fr_650px] xl:items-center">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
                 Current result
               </p>
 
-              <div className="mt-2 flex flex-wrap items-end gap-3">
-                <p className={`text-5xl font-black leading-none ${scoreTone.text}`}>
+              <div className="mt-3 flex flex-wrap items-end gap-3">
+                <p className={`text-6xl font-black leading-none ${scoreTone.text}`}>
                   {analysis.overall_score ?? "-"}%
                 </p>
 
                 <span
-                  className={`mb-1 rounded-full border px-3 py-1 text-xs font-semibold capitalize ${scoreTone.badge}`}
+                  className={`mb-2 rounded-full border px-3 py-1 text-xs font-semibold capitalize ${scoreTone.badge}`}
                 >
                   {analysis.overall_result?.replaceAll("_", " ") ??
                     scoreTone.label}
                 </span>
               </div>
 
-              <div className="mt-4 h-2.5 max-w-xl overflow-hidden rounded-full bg-muted">
+              <div className="mt-5 h-3 max-w-2xl overflow-hidden rounded-full bg-muted">
                 <div
                   className={`h-full rounded-full ${scoreTone.bar}`}
                   style={{ width: `${progressWidth}%` }}
@@ -398,11 +419,19 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[520px]">
-              <MiniStat label="Charts" value={chartAudits.length} />
-              <MiniStat label="Passed" value={passedFeedbackCount} />
-              <MiniStat label="Warnings" value={warningFeedbackCount} />
-              <MiniStat label="Failed" value={failedFeedbackCount} />
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <TopMetricCard label="Charts" value={chartAudits.length} />
+              <TopMetricCard label="Good" value={goodChartCount} tone="good" />
+              <TopMetricCard
+                label="Needs work"
+                value={warningChartCount}
+                tone="warning"
+              />
+              <TopMetricCard
+                label="Problems"
+                value={problemChartCount}
+                tone="problem"
+              />
             </div>
           </div>
         </div>
@@ -449,9 +478,8 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                     </h3>
 
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Each card shows the chart result and main remediation.
-                      Open a chart to see the full feedback, penalties, and
-                      scenario details.
+                      Click any chart card to open the full feedback, penalties,
+                      scenario details, and remediation.
                     </p>
                   </div>
                 </div>
@@ -476,11 +504,17 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                   );
 
                   return (
-                    <article
+                    <button
                       key={`${analysis.id}-chart-${audit.chart_number}`}
-                      className="overflow-hidden rounded-3xl border bg-background/70 shadow-sm"
+                      type="button"
+                      onClick={() =>
+                        setSelectedChartModal({
+                          chartNumber: audit.chart_number,
+                        })
+                      }
+                      className="group overflow-hidden rounded-3xl border bg-background/70 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-foreground/30 hover:bg-accent/30 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
                     >
-                      <div className="border-b bg-card/70 p-4">
+                      <div className="border-b bg-card/70 p-4 transition group-hover:bg-accent/40">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -497,11 +531,15 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                             </p>
                           </div>
 
-                          <span
-                            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold ${auditTone.badge}`}
-                          >
-                            {audit.score ?? "-"} / 100
-                          </span>
+                          <div className="flex shrink-0 items-center gap-3">
+                            <span
+                              className={`rounded-full border px-3 py-1 text-xs font-semibold ${auditTone.badge}`}
+                            >
+                              {audit.score ?? "-"} / 100
+                            </span>
+
+                            <ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-foreground" />
+                          </div>
                         </div>
 
                         <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-muted">
@@ -518,7 +556,7 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                       </div>
 
                       {cropUrl ? (
-                        <div className="border-b bg-muted/30 p-4">
+                        <div className="border-b bg-muted/30 p-4 transition group-hover:bg-background/40">
                           <img
                             src={cropUrl}
                             alt={`Chart ${audit.chart_number}`}
@@ -534,7 +572,7 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                       )}
 
                       <div className="grid gap-3 border-b p-4 sm:grid-cols-2">
-                        <div className="rounded-2xl border bg-card p-4">
+                        <div className="rounded-2xl border bg-card p-4 transition group-hover:bg-background">
                           <p className="text-xs uppercase tracking-wide text-muted-foreground">
                             Result
                           </p>
@@ -544,7 +582,7 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                           </p>
                         </div>
 
-                        <div className="rounded-2xl border bg-card p-4">
+                        <div className="rounded-2xl border bg-card p-4 transition group-hover:bg-background">
                           <p className="text-xs uppercase tracking-wide text-muted-foreground">
                             Confidence
                           </p>
@@ -558,15 +596,7 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                       </div>
 
                       <div className="p-4">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedChartModal({
-                              chartNumber: audit.chart_number,
-                            })
-                          }
-                          className="group w-full rounded-2xl border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        >
+                        <div className="rounded-2xl border bg-card p-4 transition group-hover:border-primary/40 group-hover:bg-primary/5">
                           <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0">
                               <p className="text-xs uppercase tracking-wide text-muted-foreground transition group-hover:text-primary">
@@ -582,9 +612,9 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                               Full audit
                             </span>
                           </div>
-                        </button>
+                        </div>
                       </div>
-                    </article>
+                    </button>
                   );
                 })}
               </div>
