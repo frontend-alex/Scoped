@@ -4,13 +4,10 @@ import {
   AlertCircle,
   BarChart3,
   CheckCircle2,
-  ChevronDown,
   Eye,
   FileImage,
-  Info,
   Layers3,
   ListChecks,
-  Search,
   ShieldCheck,
   X,
   XCircle,
@@ -99,22 +96,6 @@ function getFeedbackTone(status: FeedbackItem["status"], score: number) {
   };
 }
 
-function formatFileSize(size: number) {
-  if (!size) return "Unknown size";
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(value: string) {
-  if (!value) return "Unknown date";
-
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
 function parseChartNumberFromText(value?: string) {
   if (!value) return null;
 
@@ -136,8 +117,8 @@ function EmptyState() {
       </h2>
 
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-        Upload a dashboard image to see the detected charts, grouped feedback,
-        and IBCS compliance result.
+        Upload a dashboard image to see detected charts, grouped feedback, and
+        IBCS compliance results.
       </p>
     </section>
   );
@@ -184,28 +165,20 @@ function TabButton({
   );
 }
 
-function StatCard({
-  title,
+function MiniStat({
+  label,
   value,
-  icon: Icon,
 }: {
-  title: string;
+  label: string;
   value: number | string;
-  icon: LucideIcon;
 }) {
   return (
-    <div className="rounded-2xl border bg-background/70 p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">{title}</p>
-
-        <div className="flex size-9 items-center justify-center rounded-xl bg-muted">
-          <Icon className="size-4 text-muted-foreground" />
-        </div>
-      </div>
-
-      <p className="mt-3 text-3xl font-bold tracking-tight text-foreground">
-        {value}
+    <div className="rounded-2xl border bg-background/70 px-3 py-2">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
       </p>
+
+      <p className="mt-1 text-lg font-black text-foreground">{value}</p>
     </div>
   );
 }
@@ -287,15 +260,15 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
     useState<SelectedChartModal>(null);
 
   useEffect(() => {
-  if (!selectedChartModal) return;
+    if (!selectedChartModal) return;
 
-  const originalOverflow = document.body.style.overflow;
-  document.body.style.overflow = "hidden";
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-  return () => {
-    document.body.style.overflow = originalOverflow;
-  };
-}, [selectedChartModal]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [selectedChartModal]);
 
   const derived = useMemo(() => {
     const detections = analysis?.detections_json?.detections ?? [];
@@ -397,82 +370,41 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
   return (
     <>
       <section className="overflow-hidden rounded-[1.75rem] border bg-card shadow-sm">
-        <div className="border-b p-4 sm:p-6">
-          <div className="grid gap-5 xl:grid-cols-[1fr_310px] xl:items-center">
+        <div className="border-b p-4">
+          <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-center">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                  Selected analysis
-                </span>
-
-                <span className="rounded-full border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                  {analysis.file_type}
-                </span>
-
-                <span className="rounded-full border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                  {formatFileSize(analysis.file_size)}
-                </span>
-              </div>
-
-              <h2 className="mt-3 break-words text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                {analysis.original_filename}
-              </h2>
-
-              <p className="mt-2 text-sm text-muted-foreground">
-                {formatDate(analysis.created_at)}
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Current result
               </p>
-            </div>
 
-            <div className="rounded-3xl border bg-background/80 p-5">
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Overall score
-                  </p>
-
-                  <p className={`mt-2 text-5xl font-black ${scoreTone.text}`}>
-                    {analysis.overall_score ?? "-"}%
-                  </p>
-                </div>
+              <div className="mt-2 flex flex-wrap items-end gap-3">
+                <p className={`text-5xl font-black leading-none ${scoreTone.text}`}>
+                  {analysis.overall_score ?? "-"}%
+                </p>
 
                 <span
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${scoreTone.badge}`}
+                  className={`mb-1 rounded-full border px-3 py-1 text-xs font-semibold capitalize ${scoreTone.badge}`}
                 >
                   {analysis.overall_result?.replaceAll("_", " ") ??
                     scoreTone.label}
                 </span>
               </div>
 
-              <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-muted">
+              <div className="mt-4 h-2.5 max-w-xl overflow-hidden rounded-full bg-muted">
                 <div
                   className={`h-full rounded-full ${scoreTone.bar}`}
                   style={{ width: `${progressWidth}%` }}
                 />
               </div>
             </div>
-          </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <StatCard title="Detected items" value={detections.length} icon={Search} />
-            <StatCard title="Audited charts" value={chartAudits.length} icon={BarChart3} />
-            <StatCard title="Passed" value={passedFeedbackCount} icon={CheckCircle2} />
-            <StatCard title="Warnings" value={warningFeedbackCount} icon={AlertCircle} />
-            <StatCard title="Failed" value={failedFeedbackCount} icon={XCircle} />
-          </div>
-
-          {analysis.summary && (
-            <div className="mt-5 rounded-2xl border bg-background/80 p-4">
-              <div className="flex gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted">
-                  <Info className="size-5 text-muted-foreground" />
-                </div>
-
-                <p className="text-sm leading-6 text-muted-foreground">
-                  {analysis.summary}
-                </p>
-              </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:min-w-[520px]">
+              <MiniStat label="Charts" value={chartAudits.length} />
+              <MiniStat label="Passed" value={passedFeedbackCount} />
+              <MiniStat label="Warnings" value={warningFeedbackCount} />
+              <MiniStat label="Failed" value={failedFeedbackCount} />
             </div>
-          )}
+          </div>
         </div>
 
         <div className="border-b bg-muted/30 p-3">
@@ -517,9 +449,9 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                     </h3>
 
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Each chart card now shows only the important summary and
-                      remediation. Open the modal for the full notation,
-                      metadata, visuals, penalties, and scenario details.
+                      Each card shows the chart result and main remediation.
+                      Open a chart to see the full feedback, penalties, and
+                      scenario details.
                     </p>
                   </div>
                 </div>
@@ -626,32 +558,32 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                       </div>
 
                       <div className="p-4">
-  <button
-    type="button"
-    onClick={() =>
-      setSelectedChartModal({
-        chartNumber: audit.chart_number,
-      })
-    }
-    className="group w-full rounded-2xl border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30"
-  >
-    <div className="flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground transition group-hover:text-primary">
-          Remediation
-        </p>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedChartModal({
+                              chartNumber: audit.chart_number,
+                            })
+                          }
+                          className="group w-full rounded-2xl border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground transition group-hover:text-primary">
+                                Remediation
+                              </p>
 
-        <p className="mt-2 line-clamp-4 text-sm leading-6 text-muted-foreground">
-          {remediation}
-        </p>
-      </div>
+                              <p className="mt-2 line-clamp-4 text-sm leading-6 text-muted-foreground">
+                                {remediation}
+                              </p>
+                            </div>
 
-      <span className="shrink-0 rounded-full border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground transition group-hover:border-primary/40 group-hover:text-primary">
-  Click for full audit
-</span>
-    </div>
-  </button>
-</div>
+                            <span className="shrink-0 rounded-full border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground transition group-hover:border-primary/40 group-hover:text-primary">
+                              Full audit
+                            </span>
+                          </div>
+                        </button>
+                      </div>
                     </article>
                   );
                 })}
@@ -690,7 +622,7 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
                 </h3>
 
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Use this only when you need to compare the chart cards with the
+                  Use this when you need to compare the chart cards with the
                   original full image.
                 </p>
               </div>
@@ -767,7 +699,7 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
           onClick={() => setSelectedChartModal(null)}
         >
           <div
-            className="flex max-h-[85vh] w-full max-w-[70vw] flex-col overflow-hidden rounded-[1.75rem] border bg-card shadow-2xl max-xl:max-w-[90vw]"
+            className="flex max-h-[85vh] w-full max-w-[70vw] flex-col overflow-hidden rounded-[1.75rem] border bg-card shadow-2xl max-xl:max-w-[90vw] max-sm:max-h-[92vh] max-sm:max-w-[96vw]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 border-b p-5">
@@ -795,7 +727,7 @@ export function AnalysisDetails({ analysis }: AnalysisDetailsProps) {
               </button>
             </div>
 
-            <div className="modal-scroll overflow-y-auto p-5">
+            <div className="modal-scroll min-h-0 flex-1 overflow-y-auto p-5">
               <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
                 <div className="space-y-4">
                   {selectedChartFeedback.length > 0 ? (
