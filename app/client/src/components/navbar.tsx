@@ -1,6 +1,7 @@
 "use client";
 
 import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
+import type React from "react";
 
 import {
   Accordion,
@@ -24,6 +25,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ThemeSelect } from "@/components/theme/ThemeSelect";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -56,14 +58,13 @@ interface Navbar1Props {
   };
 }
 
- const Logo = ({ className }: { className?: string }) => {
+const Logo = ({ className }: { className?: string }) => {
   return (
     <a href="/" className={cn("", className)}>
-      <img src="/logo.png" alt="logo" className="h-10"/>  
+      <img src="/logo.png" alt="logo" className="h-10" />
     </a>
   );
-}
-
+};
 
 const Navbar1 = ({
   logo = {
@@ -151,22 +152,24 @@ const Navbar1 = ({
   className,
 }: Navbar1Props) => {
   return (
-    <section className={cn("py-4 mx-auto w-full max-w-7xl border-b", className)}>
+    <section className={cn("mx-auto w-full max-w-7xl border-b py-4", className)}>
       <div className="container">
-        {/* Desktop Menu */}
         <nav className="hidden items-center justify-between lg:flex">
           <div className="flex items-center gap-6">
-            {/* Logo */}
             <a href={logo.url} className="flex items-center gap-2">
               <img
                 src={logo.src}
                 className="max-h-8 dark:invert"
                 alt={logo.alt}
               />
-              <span className="text-lg font-semibold tracking-tighter">
-                {logo.title}
-              </span>
+
+              {logo.title && (
+                <span className="text-lg font-semibold tracking-tighter">
+                  {logo.title}
+                </span>
+              )}
             </a>
+
             <div className="flex items-center">
               <NavigationMenu>
                 <NavigationMenuList>
@@ -175,20 +178,22 @@ const Navbar1 = ({
               </NavigationMenu>
             </div>
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex items-center gap-2">
+            <ThemeSelect />
+
             <Button asChild variant="outline" size="sm">
               <a href={auth.login.url}>{auth.login.title}</a>
             </Button>
+
             <Button asChild size="sm">
               <a href={auth.signup.url}>{auth.signup.title}</a>
             </Button>
           </div>
         </nav>
 
-        {/* Mobile Menu */}
         <div className="block lg:hidden">
           <div className="flex items-center justify-between">
-            {/* Logo */}
             <a href={logo.url} className="flex items-center gap-2">
               <img
                 src={logo.src}
@@ -196,44 +201,60 @@ const Navbar1 = ({
                 alt={logo.alt}
               />
             </a>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="size-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>
-                    <a href={logo.url} className="flex items-center gap-2">
-                      <img
-                        src={logo.src}
-                        className="max-h-8 dark:invert"
-                        alt={logo.alt}
-                      />
-                    </a>
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-6 p-4">
-                  <Accordion
-                    type="single"
-                    collapsible
-                    className="flex w-full flex-col gap-4"
-                  >
-                    {menu.map((item) => renderMobileMenuItem(item))}
-                  </Accordion>
 
-                  <div className="flex flex-col gap-3">
-                    <Button asChild variant="outline">
-                      <a href={auth.login.url}>{auth.login.title}</a>
-                    </Button>
-                    <Button asChild>
-                      <a href={auth.signup.url}>{auth.signup.title}</a>
-                    </Button>
+            <div className="flex items-center gap-2">
+              <ThemeSelect />
+
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Menu className="size-4" />
+                  </Button>
+                </SheetTrigger>
+
+                <SheetContent className="overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>
+                      <a href={logo.url} className="flex items-center gap-2">
+                        <img
+                          src={logo.src}
+                          className="max-h-8 dark:invert"
+                          alt={logo.alt}
+                        />
+                      </a>
+                    </SheetTitle>
+                  </SheetHeader>
+
+                  <div className="flex flex-col gap-6 p-4">
+                    <Accordion
+                      type="single"
+                      collapsible
+                      className="flex w-full flex-col gap-4"
+                    >
+                      {menu.map((item) => renderMobileMenuItem(item))}
+                    </Accordion>
+
+                    <div className="flex items-center justify-between rounded-xl border bg-background p-3">
+                      <span className="text-sm font-medium text-foreground">
+                        Theme
+                      </span>
+
+                      <ThemeSelect />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      <Button asChild variant="outline">
+                        <a href={auth.login.url}>{auth.login.title}</a>
+                      </Button>
+
+                      <Button asChild>
+                        <a href={auth.signup.url}>{auth.signup.title}</a>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </div>
@@ -246,6 +267,7 @@ const renderMenuItem = (item: MenuItem) => {
     return (
       <NavigationMenuItem key={item.title}>
         <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
+
         <NavigationMenuContent className="bg-popover text-popover-foreground">
           {item.items.map((subItem) => (
             <NavigationMenuLink asChild key={subItem.title} className="w-80">
@@ -273,9 +295,10 @@ const renderMobileMenuItem = (item: MenuItem) => {
   if (item.items) {
     return (
       <AccordionItem key={item.title} value={item.title} className="border-b-0">
-        <AccordionTrigger className="text-md py-0 font-semibold hover:no-underline">
+        <AccordionTrigger className="py-0 text-base font-semibold hover:no-underline">
           {item.title}
         </AccordionTrigger>
+
         <AccordionContent className="mt-2">
           {item.items.map((subItem) => (
             <SubMenuLink key={subItem.title} item={subItem} />
@@ -286,7 +309,7 @@ const renderMobileMenuItem = (item: MenuItem) => {
   }
 
   return (
-    <a key={item.title} href={item.url} className="text-md font-semibold">
+    <a key={item.title} href={item.url} className="text-base font-semibold">
       {item.title}
     </a>
   );
@@ -295,12 +318,14 @@ const renderMobileMenuItem = (item: MenuItem) => {
 const SubMenuLink = ({ item }: { item: MenuItem }) => {
   return (
     <a
-      className="flex min-w-80 flex-row gap-4 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none hover:bg-muted hover:text-accent-foreground"
+      className="flex min-w-80 flex-row gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors select-none hover:bg-muted hover:text-accent-foreground"
       href={item.url}
     >
       <div className="text-foreground">{item.icon}</div>
+
       <div>
         <div className="text-sm font-semibold">{item.title}</div>
+
         {item.description && (
           <p className="text-sm leading-snug text-muted-foreground">
             {item.description}
@@ -311,4 +336,4 @@ const SubMenuLink = ({ item }: { item: MenuItem }) => {
   );
 };
 
-export { Navbar1 , Logo};
+export { Navbar1, Logo };

@@ -44,6 +44,7 @@ import {
   SidebarProvider,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { ThemeSelect } from "@/components/theme/ThemeSelect";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 
@@ -113,11 +114,7 @@ const SidebarLogo = () => {
       <SidebarMenuItem>
         <SidebarMenuButton size="lg" asChild>
           <Link to="/dashboard">
-              <img
-                src="/logo.png"
-                alt="Scoped logo"
-                className="h-10"
-              />
+            <img src="/logo.png" alt="Scoped logo" className="h-10" />
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -141,6 +138,20 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
         </NavLink>
       </SidebarMenuButton>
     </SidebarMenuItem>
+  );
+};
+
+const SidebarThemeSection = () => {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>Appearance</SidebarGroupLabel>
+
+      <SidebarGroupContent>
+        <div className="px-2 group-data-[collapsible=icon]:hidden">
+          <ThemeSelect />
+        </div>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 };
 
@@ -170,15 +181,18 @@ const NavUser = () => {
                   {getInitials(username)}
                 </AvatarFallback>
               </Avatar>
+
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{username}</span>
                 <span className="truncate text-xs text-muted-foreground">
                   {email}
                 </span>
               </div>
+
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             className="min-w-56 rounded-lg"
             side="bottom"
@@ -192,6 +206,7 @@ const NavUser = () => {
                     {getInitials(username)}
                   </AvatarFallback>
                 </Avatar>
+
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{username}</span>
                   <span className="truncate text-xs text-muted-foreground">
@@ -200,12 +215,16 @@ const NavUser = () => {
                 </div>
               </div>
             </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem disabled>
               <User className="mr-2 size-4" />
               Account
             </DropdownMenuItem>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 size-4" />
               Log out
@@ -223,10 +242,12 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
       <SidebarHeader>
         <SidebarLogo />
       </SidebarHeader>
+
       <SidebarContent>
         {navGroups.map((group) => (
           <SidebarGroup key={group.title}>
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => (
@@ -236,10 +257,14 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+
+        <SidebarThemeSection />
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );
@@ -256,22 +281,32 @@ export function ApplicationShell1({ className }: ApplicationShell1Props) {
   return (
     <SidebarProvider className={cn(className)}>
       <AppSidebar />
+
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
                 <BreadcrumbLink asChild>
-                  <Link to="/dashboard"><House size={17}/></Link>
+                  <Link to="/dashboard">
+                    <House size={17} />
+                  </Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
+
               <BreadcrumbSeparator className="hidden md:block" />
+
               <BreadcrumbItem>
                 <BreadcrumbPage>{currentPage.label}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+
+          <div className="hidden sm:block">
+            <ThemeSelect />
+          </div>
         </header>
+
         <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <Outlet />
         </main>
