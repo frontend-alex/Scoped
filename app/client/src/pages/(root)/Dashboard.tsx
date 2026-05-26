@@ -1,306 +1,229 @@
 import { useEffect, useState } from "react";
-import { FileText, LoaderCircle, Plus, X } from "lucide-react";
-import { toast } from "sonner";
-import { useParams } from "react-router-dom";
+import { FileImage, Loader2, UploadCloud } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useUser } from "@/context/UserContext";
-import { apiRequest, type DashboardAnalysis } from "@/lib/api";
-import AnalysisDetails from "@/components/dashboard/AnalysisDetails";
+  getDashboardAnalysis,
+  getDashboardHistory,
+  uploadDashboard,
+  type DashboardAnalysis,
+} from "@/lib/api";
 
-const Dashboard = () => {
-  const { user, pending, authenticated } = useUser();
-  const { id } = useParams();
+import { AnalysisDetails } from "@/components/dashboard/AnalysisDetails";
 
-  const [selectedAnalysis, setSelectedAnalysis] =
-    useState<DashboardAnalysis | null>(null);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
+export default function Dashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [currentAnalysis, setCurrentAnalysis] = useState<DashboardAnalysis | null>(null);
+  const [history, setHistory] = useState<DashboardAnalysis[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const primaryButton =
-  "bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary/90 disabled:opacity-70";
+  async function loadHistory() {
+    setIsLoading(true);
+    setErrorMessage(null);
 
-  const selectedFileSize = selectedFile
-    ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
-    : null;
-
-  const loadLatestAnalysis = async () => {
     try {
-      setIsLoadingAnalysis(true);
+      const data = await getDashboardHistory();
+      setHistory(data);
 
-      const data = await apiRequest<DashboardAnalysis[]>("/api/dashboard/history", {
-        method: "GET",
-      });
-
-      setSelectedAnalysis(data.length > 0 ? data[0] : null);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load dashboard history.",
-      );
-    } finally {
-      setIsLoadingAnalysis(false);
-    }
-  };
-
-  const loadAnalysisById = async (analysisId: string) => {
-    try {
-      setIsLoadingAnalysis(true);
-
-      const data = await apiRequest<DashboardAnalysis>(
-        `/api/dashboard/${analysisId}`,
-        {
-          method: "GET",
-        },
-      );
-
-      setSelectedAnalysis(data);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load dashboard analysis.",
-      );
-    } finally {
-      setIsLoadingAnalysis(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!pending && authenticated) {
-      if (id) {
-        void loadAnalysisById(id);
-      } else {
-        void loadLatestAnalysis();
+      if (data.length > 0) {
+        setCurrentAnalysis(data[0]);
       }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Could not load dashboard history.",
+      );
+    } finally {
+      setIsLoading(false);
     }
-  }, [pending, authenticated, id]);
+  }
 
-  const handleUpload = async () => {
+  async function loadAnalysisById(id: number) {
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const data = await getDashboardAnalysis(id);
+      setCurrentAnalysis(data);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Could not load analysis.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleUpload() {
     if (!selectedFile) {
-      toast.error("Please select a file first.");
+      setErrorMessage("Please select a dashboard image first.");
       return;
     }
 
+    setIsUploading(true);
+    setErrorMessage(null);
+
     try {
-      setIsUploading(true);
+      const result = await uploadDashboard(selectedFile);
 
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-
-      const result = await apiRequest<DashboardAnalysis>("/api/dashboard/analyze", {
-        method: "POST",
-        body: formData,
-      });
-
-      setSelectedAnalysis(result);
+      setCurrentAnalysis(result);
       setSelectedFile(null);
-      setIsUploadOpen(false);
-      toast.success("Dashboard uploaded successfully.");
+
+      const updatedHistory = await getDashboardHistory();
+      setHistory(updatedHistory);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to upload dashboard.",
+      setErrorMessage(
+        error instanceof Error ? error.message : "Could not upload dashboard.",
       );
     } finally {
       setIsUploading(false);
     }
-  };
-
-  if (pending || isLoadingAnalysis) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <LoaderCircle className="h-5 w-5 animate-spin" />
-          Loading dashboard...
-        </div>
-      </div>
-    );
   }
 
-  const handlePasteFile = (event: React.ClipboardEvent<HTMLDivElement>) => {
-    const items = event.clipboardData.items;
-
-    for (const item of items) {
-      if (item.kind === "file") {
-        const file = item.getAsFile();
-
-        if (file) {
-          setSelectedFile(file);
-          toast.success("Pasted image selected.");
-          return;
-        }
-      }
-    }
-
-    toast.error("No image or file found in clipboard.");
-  };
-
-  const handleDropFile = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDraggingFile(false);
-
-    const file = event.dataTransfer.files?.[0];
-
-    if (!file) {
-      toast.error("No file found in drop.");
-      return;
-    }
-
-    setSelectedFile(file);
-    toast.success("Dropped file selected.");
-  };
+  useEffect(() => {
+    void loadHistory();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background ">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-col gap-4 border-b py-5 md:flex-row md:items-center md:justify-between">
+    <main className="mx-auto max-w-7xl space-y-8 p-6">
+      <section className="rounded-3xl border bg-card p-6 shadow-sm">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="mt-1 text-2xl font-semibold text-foreground">
-              Your Drafts
+            <p className="text-sm font-medium text-muted-foreground">
+              IBCS Compliance
+            </p>
+
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+              Dashboard analyzer
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Welcome{user ? `, ${user.username}` : ""}. Upload a dashboard and
-              review its IBCS analysis.
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Upload a dashboard image. The backend detects chart elements,
+              audits chart crops, and returns IBCS feedback.
             </p>
           </div>
 
-          <Dialog
-            open={isUploadOpen}
-            onOpenChange={(open) => {
-              if (isUploading) return;
-              setIsUploadOpen(open);
-              if (!open) setSelectedFile(null);
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button className={primaryButton}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Dashboard
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-sm">
-              <DialogHeader>
-                <DialogTitle>Upload Files</DialogTitle>
-                <DialogDescription>
-                  Upload a dashboard so we can analyse it. You can also paste a
-                  screenshot into the upload area with Ctrl + V.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div
-                  onPaste={handlePasteFile}
-                  onDragEnter={(event) => {
-                    event.preventDefault();
-                    setIsDraggingFile(true);
-                  }}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDragLeave={(event) => {
-                    if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-                      setIsDraggingFile(false);
-                    }
-                  }}
-                  onDrop={handleDropFile}
-                  tabIndex={0}
-                  className={`flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center outline-none transition focus:border-ring ${
-                    isDraggingFile
-                      ? "border-foreground/50 bg-accent"
-                      : "border-muted-foreground/30 bg-muted/60 hover:border-foreground/30 hover:bg-accent"
-                  }`}
-                >
-                  <div className="rounded-full border-2 border-dashed border-muted-foreground/25 bg-background p-4 shadow-sm">
-                    <FileText className="size-8 text-muted-foreground" />
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      Drop dashboard files here
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      PNG, JPG, PDF, PPTX, DOCX or paste a screenshot with Ctrl + V
-                    </p>
-                  </div>
-
-                  <label className="inline-flex h-10 cursor-pointer items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition hover:bg-accent hover:text-foreground">
-                    Browse files
-                    <input
-                      type="file"
-                      accept=".png,.jpg,.jpeg,.pdf,.pptx,.docx"
-                      onChange={(event) =>
-                        setSelectedFile(event.target.files?.[0] ?? null)
-                      }
-                      className="sr-only"
-                    />
-                  </label>
-                </div>
-
-                {selectedFile && (
-                  <div className="flex items-center gap-3 rounded-xl border bg-background p-3 shadow-sm">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
-                      <FileText className="size-5" />
-                    </div>
-                    <div className="min-w-0 flex-1 text-left">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {selectedFile.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedFile.type || "Selected file"} · {selectedFileSize}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      onClick={() => setSelectedFile(null)}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </div>
-                )}
+          <div className="rounded-2xl bg-accent p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-background">
+                <FileImage className="size-5 text-muted-foreground" />
               </div>
 
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="outline" disabled={isUploading}>
-                    Cancel
-                  </Button>
-                </DialogClose>
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {history.length}
+                </p>
 
-                <Button
-                  type="button"
-                  onClick={handleUpload}
-                  disabled={isUploading || !selectedFile}
-                  className={primaryButton}
-                >
-                  {isUploading ? (
-                    <div className="flex items-center gap-2">
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                      Uploading...
-                    </div>
-                  ) : (
-                    "Add New Dashboard"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <p className="text-xs text-muted-foreground">
+                  Saved analyses
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <AnalysisDetails analysis={selectedAnalysis} />
-      </div>
-    </div>
-  );
-};
+        <div className="mt-6 rounded-2xl border border-dashed bg-background p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <label className="flex flex-1 cursor-pointer items-center gap-4 rounded-xl bg-accent p-4">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-background">
+                <UploadCloud className="size-5 text-muted-foreground" />
+              </div>
 
-export default Dashboard;
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {selectedFile ? selectedFile.name : "Choose PNG, JPG, or JPEG file"}
+                </p>
+
+                <p className="text-xs text-muted-foreground">
+                  The image will be analyzed by the backend model.
+                </p>
+              </div>
+
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                className="hidden"
+                onChange={(event) => {
+                  setSelectedFile(event.target.files?.[0] ?? null);
+                }}
+              />
+            </label>
+
+            <button
+              type="button"
+              disabled={!selectedFile || isUploading}
+              onClick={handleUpload}
+              className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                "Analyze dashboard"
+              )}
+            </button>
+          </div>
+        </div>
+
+        {errorMessage && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+            {errorMessage}
+          </div>
+        )}
+      </section>
+
+      <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
+        <aside className="rounded-3xl border bg-card p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">
+              History
+            </h2>
+
+            {isLoading && (
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+
+          {history.length === 0 ? (
+            <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+              No dashboard analyses yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {history.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => void loadAnalysisById(item.id)}
+                  className={`w-full rounded-xl border p-4 text-left transition hover:bg-accent ${
+                    currentAnalysis?.id === item.id ? "bg-accent" : "bg-background"
+                  }`}
+                >
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {item.original_filename}
+                  </p>
+
+                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span className="capitalize">
+                      {item.status}
+                    </span>
+
+                    <span>
+                      {item.overall_score ?? "-"}%
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </aside>
+
+        <section>
+          <AnalysisDetails analysis={currentAnalysis} />
+        </section>
+      </div>
+    </main>
+  );
+}

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 
 class IDashboardRepository(ABC):
@@ -16,5 +15,5 @@ class IDashboardRepository(ABC):
         pass
 
     @abstractmethod
-    def get_user_history(self, user_id: int):
+    def get_user_history(self, user_id: str):
         pass

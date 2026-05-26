@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from src.core.models.dashboard_analysis_model import DashboardAnalysis
+
 from src.dal.interface.dashboard_interface import IDashboardRepository
+from src.ml.model.model import DashboardAnalysis
 
 
 class DashboardRepository(IDashboardRepository):
@@ -9,13 +10,16 @@ class DashboardRepository(IDashboardRepository):
 
     def create_analysis(self, analysis_data: dict):
         analysis = DashboardAnalysis(**analysis_data)
+
         self.db.add(analysis)
         self.db.commit()
         self.db.refresh(analysis)
+
         return analysis
 
     def update_analysis(self, analysis_id: int, update_data: dict):
         analysis = self.get_analysis_by_id(analysis_id)
+
         if not analysis:
             return None
 
@@ -24,6 +28,7 @@ class DashboardRepository(IDashboardRepository):
 
         self.db.commit()
         self.db.refresh(analysis)
+
         return analysis
 
     def get_analysis_by_id(self, analysis_id: int):
@@ -33,7 +38,7 @@ class DashboardRepository(IDashboardRepository):
             .first()
         )
 
-    def get_user_history(self, user_id: int):
+    def get_user_history(self, user_id: str):
         return (
             self.db.query(DashboardAnalysis)
             .filter(DashboardAnalysis.user_id == user_id)

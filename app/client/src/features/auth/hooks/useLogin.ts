@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 
-import { FAKE_AUTH_TOKEN, apiRequest, type ApiEnvelope } from "@/lib/api";
+import { apiRequest, type ApiEnvelope } from "@/lib/api";
 
 type TokenResponse = {
   access_token: string;
@@ -15,9 +15,6 @@ const loginSchema = z.object({
   username: z.string().min(3),
   password: z.string().min(8),
 });
-
-const demoUsernames = new Set(["demo", "scoped", "demo@example.com"]);
-const demoPasswords = new Set(["password", "password123"]);
 
 export type LoginSchemaType = z.infer<typeof loginSchema>;
 
@@ -36,30 +33,23 @@ export const useLogin = () => {
     try {
       setIsPending(true);
 
-      const username = data.username.trim().toLowerCase();
-      const password = data.password.trim();
-
-      if (demoUsernames.has(username) && demoPasswords.has(password)) {
-        localStorage.setItem("auth_token", FAKE_AUTH_TOKEN);
-        toast.success("Logged in as demo user");
-        window.location.href = "/dashboard";
-        return;
-      }
-
       const response = await apiRequest<ApiEnvelope<TokenResponse>>(
         "/api/auth/login",
         {
           method: "POST",
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            username: data.username.trim(),
+            password: data.password,
+          }),
         },
       );
 
-      if (!response.data) {
+      if (!response.data?.access_token) {
         throw new Error("Missing token in login response");
       }
 
-      const token = response.data;
-      localStorage.setItem("auth_token", token.access_token);
+      localStorage.setItem("auth_token", response.data.access_token);
+
       toast.success("Login successful");
       window.location.href = "/dashboard";
     } catch (error) {
