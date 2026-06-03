@@ -75,14 +75,6 @@ export type DashboardAnalysis = {
   updated_at: string;
 };
 
-type RawDashboardAnalysis = Omit<
-  DashboardAnalysis,
-  "feedback_json" | "detections_json"
-> & {
-  feedback_json?: FeedbackItem[] | null;
-  detections_json?: DashboardDetections | DetectionItem[] | null;
-};
-
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("auth_token");
 
@@ -91,54 +83,6 @@ function getAuthHeaders(): HeadersInit {
         Authorization: `Bearer ${token}`,
       }
     : {};
-}
-
-function isApiEnvelope<T>(value: unknown): value is ApiEnvelope<T> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "status_code" in value &&
-    "message" in value &&
-    "data" in value
-  );
-}
-
-function unwrapApiData<T>(value: T | ApiEnvelope<T>): T {
-  if (isApiEnvelope<T>(value)) {
-    return value.data;
-  }
-
-  return value;
-}
-
-function normalizeDetectionsJson(
-  detectionsJson?: DashboardDetections | DetectionItem[] | null,
-): DashboardDetections | null {
-  if (!detectionsJson) {
-    return null;
-  }
-
-  if (Array.isArray(detectionsJson)) {
-    return {
-      detections: detectionsJson,
-      chart_audits: [],
-    };
-  }
-
-  return {
-    detections: detectionsJson.detections ?? [],
-    chart_audits: detectionsJson.chart_audits ?? [],
-  };
-}
-
-function normalizeDashboardAnalysis(
-  analysis: RawDashboardAnalysis,
-): DashboardAnalysis {
-  return {
-    ...analysis,
-    feedback_json: analysis.feedback_json ?? [],
-    detections_json: normalizeDetectionsJson(analysis.detections_json),
-  };
 }
 
 export function getStaticFileUrl(path?: string | null): string | null {
@@ -192,40 +136,4 @@ export async function apiRequest<T>(
   }
 
   return response.json() as Promise<T>;
-}
-
-export async function uploadDashboard(file: File): Promise<DashboardAnalysis> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await apiRequest<
-    RawDashboardAnalysis | ApiEnvelope<RawDashboardAnalysis>
-  >("/api/dashboard/analyze", {
-    method: "POST",
-    body: formData,
-  });
-
-  return normalizeDashboardAnalysis(unwrapApiData(response));
-}
-
-export async function getDashboardHistory(): Promise<DashboardAnalysis[]> {
-  const response = await apiRequest<
-    RawDashboardAnalysis[] | ApiEnvelope<RawDashboardAnalysis[]>
-  >("/api/dashboard/history", {
-    method: "GET",
-  });
-
-  return unwrapApiData(response).map(normalizeDashboardAnalysis);
-}
-
-export async function getDashboardAnalysis(
-  id: number | string,
-): Promise<DashboardAnalysis> {
-  const response = await apiRequest<
-    RawDashboardAnalysis | ApiEnvelope<RawDashboardAnalysis>
-  >(`/api/dashboard/${id}`, {
-    method: "GET",
-  });
-
-  return normalizeDashboardAnalysis(unwrapApiData(response));
 }

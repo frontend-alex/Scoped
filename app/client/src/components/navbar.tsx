@@ -1,6 +1,6 @@
 "use client";
 
-import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
+import { Book, LogsIcon, Menu, Sunset, Trees, Zap } from "lucide-react";
 import type React from "react";
 
 import {
@@ -26,6 +26,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useTheme } from "./theme-provider";
 
 interface MenuItem {
   title: string;
@@ -58,20 +59,17 @@ interface Navbar1Props {
 }
 
 const Logo = ({ className }: { className?: string }) => {
+
+  const { theme } = useTheme();
+
   return (
     <a href="/" className={cn("", className)}>
-      <img src="/logo.png" alt="logo" className="h-10" />
+      <img src={theme === "dark" ? "/logo-white.png" : "/logo.png"} alt="logo" className="h-10" />
     </a>
   );
 };
 
 const Navbar1 = ({
-  logo = {
-    url: "/",
-    src: "/logo.png",
-    alt: "logo",
-    title: "",
-  },
   menu = [
     { title: "Home", url: "#" },
     {
@@ -155,20 +153,7 @@ const Navbar1 = ({
       <div className="container">
         <nav className="hidden items-center justify-between lg:flex">
           <div className="flex items-center gap-6">
-            <a href={logo.url} className="flex items-center gap-2">
-              <img
-                src={logo.src}
-                className="max-h-8 dark:invert"
-                alt={logo.alt}
-              />
-
-              {logo.title && (
-                <span className="text-lg font-semibold tracking-tighter">
-                  {logo.title}
-                </span>
-              )}
-            </a>
-
+           <Logo/>
             <div className="flex items-center">
               <NavigationMenu>
                 <NavigationMenuList>
@@ -191,13 +176,7 @@ const Navbar1 = ({
 
         <div className="block lg:hidden">
           <div className="flex items-center justify-between">
-            <a href={logo.url} className="flex items-center gap-2">
-              <img
-                src={logo.src}
-                className="max-h-8 dark:invert"
-                alt={logo.alt}
-              />
-            </a>
+            <Logo/>
 
             <div className="flex items-center gap-2">
               <Sheet>
@@ -210,13 +189,7 @@ const Navbar1 = ({
                 <SheetContent className="overflow-y-auto">
                   <SheetHeader>
                     <SheetTitle>
-                      <a href={logo.url} className="flex items-center gap-2">
-                        <img
-                          src={logo.src}
-                          className="max-h-8 dark:invert"
-                          alt={logo.alt}
-                        />
-                      </a>
+                      <LogsIcon/>
                     </SheetTitle>
                   </SheetHeader>
 

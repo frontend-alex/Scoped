@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
+import { Logo } from "../navbar";
 
 type NavItem = {
   label: string;
@@ -74,12 +75,6 @@ const navGroups = [
   {
     title: "Account",
     items: [
-      {
-        label: "Security",
-        icon: Shield,
-        href: "/security",
-        exact: true,
-      },
       {
         label: "Settings",
         icon: Settings,
@@ -113,7 +108,7 @@ const SidebarLogo = () => {
       <SidebarMenuItem>
         <SidebarMenuButton size="lg" asChild>
           <Link to="/dashboard">
-            <img src="/logo.png" alt="Scoped logo" className="h-10" />
+            <Logo/>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -257,7 +252,7 @@ type ApplicationShell1Props = {
   className?: string;
 };
 
-export function ApplicationShell1({ className }: ApplicationShell1Props) {
+export function AppShell({ className }: ApplicationShell1Props) {
   const location = useLocation();
   const currentPage = getCurrentPage(location.pathname);
 
@@ -286,7 +281,7 @@ export function ApplicationShell1({ className }: ApplicationShell1Props) {
           </Breadcrumb>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="max-w-5xl mx-auto py-10 w-full">
           <Outlet />
         </main>
       </SidebarInset>
@@ -294,4 +289,4 @@ export function ApplicationShell1({ className }: ApplicationShell1Props) {
   );
 }
 
-export default ApplicationShell1;
+export default AppShell;

@@ -17,7 +17,7 @@
     <StrictMode>
       <BrowserRouter>
         <UserProvider>
-          <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+          <ThemeProvider defaultTheme="light" >
             <TooltipProvider>
               <App />
               <Toaster position="top-center" />

@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 
 import { useUser } from "@/context/UserContext";
 import { apiRequest, type DashboardAnalysis } from "@/lib/api";
+import Loading from "@/components/loader";
+import { Separator } from "@/components/ui/separator";
 
 const History = () => {
   const { pending, authenticated } = useUser();
@@ -46,28 +48,22 @@ const History = () => {
 
   if (pending || isLoadingHistory) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <LoaderCircle className="h-5 w-5 animate-spin" />
-          Loading history...
-        </div>
-      </div>
+      <Loading/>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="border-b py-5">
-          <h1 className="mt-1 text-2xl font-semibold text-foreground">
-            Analysis History
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Browse previously uploaded dashboards and open any analysis in detail.
-          </p>
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-xl font-semibold">Analysis History</h1>
+        <p className="text-sm text-stone-400">
+          Browse previously uploaded dashboards and open any analysis in detail.
+        </p>
+      </div>
 
-        <section>
+      <Separator/>
+
+        <section className="w-full">
           {history.length === 0 ? (
             <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
               No previous analyses yet.
@@ -133,7 +129,6 @@ const History = () => {
             </div>
           )}
         </section>
-      </div>
     </div>
   );
 };
