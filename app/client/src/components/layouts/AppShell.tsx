@@ -44,7 +44,6 @@ import {
   SidebarProvider,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { ThemeSelect } from "@/components/theme/ThemeSelect";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 
@@ -138,20 +137,6 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
         </NavLink>
       </SidebarMenuButton>
     </SidebarMenuItem>
-  );
-};
-
-const SidebarThemeSection = () => {
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Appearance</SidebarGroupLabel>
-
-      <SidebarGroupContent>
-        <div className="px-2 group-data-[collapsible=icon]:hidden">
-          <ThemeSelect />
-        </div>
-      </SidebarGroupContent>
-    </SidebarGroup>
   );
 };
 
@@ -257,8 +242,6 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-
-        <SidebarThemeSection />
       </SidebarContent>
 
       <SidebarFooter>
@@ -301,10 +284,6 @@ export function ApplicationShell1({ className }: ApplicationShell1Props) {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-
-          <div className="hidden sm:block">
-            <ThemeSelect />
-          </div>
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">

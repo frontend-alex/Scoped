@@ -25,7 +25,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ThemeSelect } from "@/components/theme/ThemeSelect";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -180,8 +179,6 @@ const Navbar1 = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <ThemeSelect />
-
             <Button asChild variant="outline" size="sm">
               <a href={auth.login.url}>{auth.login.title}</a>
             </Button>
@@ -203,8 +200,6 @@ const Navbar1 = ({
             </a>
 
             <div className="flex items-center gap-2">
-              <ThemeSelect />
-
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="icon">
@@ -233,15 +228,7 @@ const Navbar1 = ({
                     >
                       {menu.map((item) => renderMobileMenuItem(item))}
                     </Accordion>
-
-                    <div className="flex items-center justify-between rounded-xl border bg-background p-3">
-                      <span className="text-sm font-medium text-foreground">
-                        Theme
-                      </span>
-
-                      <ThemeSelect />
-                    </div>
-
+                    
                     <div className="flex flex-col gap-3">
                       <Button asChild variant="outline">
                         <a href={auth.login.url}>{auth.login.title}</a>
