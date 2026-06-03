@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import json
 import base64
 
@@ -7,6 +6,8 @@ import cv2
 import numpy as np
 from groq import Groq
 from ultralytics import YOLO
+
+from src.config.config import settings
 
 
 SRC_DIR = Path(__file__).resolve().parents[1]
@@ -34,10 +35,7 @@ AUDITABLE_CHART_CLASSES = {
     "column_chart",
 }
 
-GROQ_MODEL_ID = os.getenv(
-    "GROQ_MODEL_ID",
-    "meta-llama/llama-4-scout-17b-16e-instruct"
-)
+GROQ_MODEL_ID = settings.GROQ_MODEL_ID
 
 LONG_SYSTEM_PROMPT = """
 You are a Senior IBCS Certified Auditor. Your task is to provide a granular "Compliance Score" (0-100%) for a chart crop based on the strict IBCS UNIFY Scenario Rules.
@@ -213,7 +211,7 @@ def calculate_chart_score(vlm_result: dict) -> int:
 
 
 def analyze_dashboard_real(file_path: str) -> dict:
-    groq_api_key = os.getenv("GROQ_API_KEY")
+    groq_api_key = settings.GROQ_API_KEY
 
     if not groq_api_key:
         raise ValueError("GROQ_API_KEY is missing from environment variables.")

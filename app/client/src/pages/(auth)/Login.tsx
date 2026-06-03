@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Logo } from "@/components/navbar";
+import { useTheme } from "@/components/theme-provider";
 
 const Login = () => {
   const { form, handleSubmit, isPending } = useLogin();
+  const { theme } = useTheme();
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
@@ -106,7 +108,7 @@ const Login = () => {
       <div className="bg-muted relative hidden lg:block overflow-hidden">
       <Logo className="absolute top-4 left-4 h-10"/>
 
-      <img src="https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas/saas-1-16x9.png" className="w-full h-2/3 object-cover absolute bottom-0 rounded-xl shadow-lg -right-10"/>
+      <img src={theme === "dark" ? "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas/saas-1-16x9-dark.png" : "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas/saas-1-16x9.png"} className="w-full h-2/3 object-cover absolute bottom-0 rounded-xl shadow-lg -right-10"/>
       </div>
     </div>
   );

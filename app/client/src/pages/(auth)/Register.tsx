@@ -9,14 +9,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useRegister } from "@/features/auth/hooks/useRegister";
 import PasswordStrengthChecks from "@/components/shared/PasswordChecker";
 import { Logo } from "@/components/navbar";
+import { useTheme } from "@/components/theme-provider";
 
 const Register = () => {
   const { form, handleSubmit, isPending } = useRegister();
+  const { theme } = useTheme();
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="bg-muted relative hidden lg:block overflow-hidden">
-        <img src="https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas/saas-1-16x9.png" className="w-full h-2/3 object-cover absolute bottom-0 rounded-xl shadow-lg -left-10" />
+             <img src={theme === "dark" ? "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas/saas-1-16x9-dark.png" : "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas/saas-1-16x9.png"} className="w-full h-2/3 object-cover absolute bottom-0 rounded-xl shadow-lg -right-10"/>
 
       </div>
 
