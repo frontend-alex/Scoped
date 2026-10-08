@@ -1,69 +1,85 @@
-# IBCS Dashboard Compliance Checker
+# Scoped — Dashboard Analysis Prototype
 
-## Starting point / purpose
-This project builds an application to **check whether a dashboard is IBCS-compliant** (International Business Communication Standards).  
-Given a dashboard (e.g., screenshot, exported image/PDF, or other agreed input), the app should:
+A full-stack workshop project that analyzes dashboard images for selected International Business Communication Standards (IBCS) presentation rules.
 
-- **Detect violations** of selected IBCS rules
-- **Explain what is not compliant** and **where** (rule + affected chart/element)
-- Provide actionable guidance to make the dashboard compliant
+## Current status
 
-This is developed in the context of an **IBCS workshop** where the client will act as the customer, provide limited training data, and monitor progress (questions, feedback, and guidance).
+Implemented prototype, not documentation-only. The repository contains a React interface, FastAPI backend, PostgreSQL persistence, YOLO chart detection, and vision-language-model analysis. Its scores are application heuristics rather than a verified IBCS certification.
 
-## IBCS constraints in scope (initial)
-The dashboard we validate against should follow these workshop constraints:
+## Features and implementation
 
-- **Proper scaling**
-  - Same units must be scaled the same across comparable visuals
-  - Use **scaling indicators** when necessary (e.g., “k”, “M”, axis labels, or explicit notation)
-- **Unified scenarios**
-  - Use consistent scenario styles:
-    - **outlined**
-    - **hatched**
-    - **solid**
-- **Stick to one solid color**
-  - Avoid multi-color encoding unless explicitly allowed by the client’s workshop rules
+- Authentication screens plus dashboard upload and analysis-history interfaces.
+- A FastAPI API with request/response contracts and separated controller, service, and repository layers.
+- YOLO detection of chart regions and generation of annotated images/crops.
+- Groq vision-language-model calls to analyze chart notation, metadata, and presentation.
+- Stored analysis status, findings, scores, detections, and image paths.
 
-> Note: The exact rule checklist can be expanded/adjusted with the client as the workshop progresses.
+## Technology
 
-## What is expected (workshop deliverables)
-By the end of the workshop, we are expected to deliver:
+React, TypeScript, Vite, FastAPI, SQLAlchemy, PostgreSQL, OpenCV, Ultralytics YOLO, and Groq. Backend pyproject.toml requires Python >=3.12.
 
-- **Plan & strategy**
-  - Approach for building the checker
-  - Milestones, risks, and how feedback will be incorporated
-  - Definition of “IBCS-compliant” for the implemented rule set
-- **Technical solution**
-  - Working application that evaluates a dashboard and outputs findings
-  - Clear outputs: pass/fail per rule, and detailed “what exactly is not compliant”
-- **Final presentation**
-  - Research summary (what we tested/learned, limitations)
-  - Live demo of the app on example dashboards
+## Repository map
 
-## Data situation & strategy (limited training data)
-The client will provide limited training data. To improve robustness, we will pursue additional data sources/approaches:
+| Path | Purpose |
+| --- | --- |
+| [app/client](app/client) | React application |
+| [app/backend/main.py](app/backend/main.py) | FastAPI entry point |
+| [app/backend/src/api](app/backend/src/api) | HTTP routes and contracts |
+| [app/backend/src/core](app/backend/src/core) | Application models and services |
+| [app/backend/src/dal](app/backend/src/dal) | Repository layer |
+| [app/backend/src/services/dashboard_analyzer.py](app/backend/src/services/dashboard_analyzer.py) | Chart detection and model-analysis pipeline |
+| [app/backend/uploads](app/backend/uploads) | Original, annotated, and cropped images |
 
-- **Synthetic data generation**
-  - Create compliant/non-compliant dashboard variants by controlled transformations:
-    - scale changes, missing indicators, inconsistent units
-    - scenario styling swaps (outlined/hatched/solid)
-    - color palette violations (multiple hues, inconsistent saturation)
-- **Public/permissioned examples**
-  - Collect dashboards from public reports or internal examples **only if legally permitted**
-  - If needed, build a curated dataset from screenshots with annotation guidelines
-- **Rule-based baselines**
-  - Implement deterministic checks where possible (e.g., color count/palette, line/area styles, axis label parsing)
-  - Use ML only where heuristics are insufficient, keeping explainability as a priority
+## Local setup
 
-## Success criteria (definition of “done”)
-- The app can ingest agreed dashboard inputs and produce a **clear compliance report**
-- Each violation includes:
-  - **Rule name**
-  - **Description of the problem**
-  - **Where it occurs** (chart/region/element reference)
-  - **Recommended fix**
-- Results are consistent and reproducible for the same input
+Run the native development setup first. Start PostgreSQL with a database for this project:
 
-## Project scope (current)
-- This repository currently contains documentation only; implementation will be added during the workshop.
+```bash
+git clone https://github.com/frontend-alex/Scoped.git
+cd Scoped
+docker run --name scoped-local-postgres -e POSTGRES_PASSWORD=local-only-password -e POSTGRES_DB=ibcs_db -p 5432:5432 -d postgres:16
+cd app/backend
+cp .env.example .env
+uv sync
+```
 
+Set DATABASE_URL to postgresql://postgres:local-only-password@127.0.0.1:5432/ibcs_db, provide JWT_SECRET_KEY, and set GROQ_API_KEY for image analysis. JWT_ALGORITHM and JWT_EXPIRATION_MINUTES have defaults in the configuration. The detector requires src/ml/model/best.pt.
+
+```bash
+uv run uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
+In another terminal, from app/client:
+
+```bash
+npm install
+npm run dev
+```
+
+Use the Vite localhost:5173 origin accepted by the backend CORS configuration. The frontend API helper currently targets http://127.0.0.1:8000. API documentation is exposed at /docs.
+
+## Verification
+
+```bash
+curl http://127.0.0.1:8000/
+cd app/client
+npm run build
+npm run typecheck
+npm run lint
+```
+
+Manually validate authentication, image upload, saved history, and model/API error handling with a local test image. No runtime, external model calls, or accuracy evaluation were performed in this documentation update.
+
+## Limitations and next steps
+
+- The original workshop plan also discusses synthetic data and deterministic baselines; those goals should not be presented as completed without evaluation evidence.
+- Scores depend on model responses and custom penalties. A fixed prompt/temperature does not establish reproducibility or correctness.
+- Native setup is documented because root Compose expects a default backend Dockerfile while the checked-in file is named Dockerfile.txt.
+- Deployment requires revisiting hardcoded frontend API/CORS origins and handling upload storage and model availability.
+
+## Code review starting points
+
+- [app/backend/src/services/dashboard_analyzer.py](app/backend/src/services/dashboard_analyzer.py)
+- [app/backend/src/api/router/routes.py](app/backend/src/api/router/routes.py)
+- [app/backend/src/core/models/dashboard_analysis_model.py](app/backend/src/core/models/dashboard_analysis_model.py)
+- [app/client/src/lib/api.ts](app/client/src/lib/api.ts)
